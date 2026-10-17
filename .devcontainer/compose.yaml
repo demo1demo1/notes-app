@@ -1,0 +1,24 @@
+# Started by Codespaces, VS Code, or `npx @constat-io/cli try`. Local values only: never a real secret.
+services:
+  db:
+    image: postgres:16
+    environment: { POSTGRES_USER: app, POSTGRES_PASSWORD: app, POSTGRES_DB: app }
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U app"], interval: 2s, retries: 30 }
+  app:
+    image: node:22
+    working_dir: /app
+    volumes: ["..:/app", "node_modules:/app/node_modules"]
+    environment:
+      DATABASE_URL: postgres://app:app@db:5432/app
+      WATCHPACK_POLLING: "true"
+      # Try mode (template 49): the DoneMark strip shows what the app said; the try line hands its key through.
+      DONEMARK_TRY: ${DONEMARK_TRY:-1}
+      # The commit it runs, when the starter knows it (CI does), for /api/v1/version.
+      CONSTAT_COMMIT: ${CONSTAT_COMMIT:-}
+      DONEMARK_TRY_KEY: ${DONEMARK_TRY_KEY:-}
+      DONEMARK_URL: ${DONEMARK_URL:-}
+    command: ["sh", "-c", "npm install --no-audit --no-fund && npm run try:prepare && npm run dev -- -H 0.0.0.0"]
+    ports: ["${TRY_PORT:-3000}:3000"]
+    depends_on: { db: { condition: service_healthy } }
+volumes:
+  node_modules: {}
